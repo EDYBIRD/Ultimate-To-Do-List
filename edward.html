@@ -1,34 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Ultimate To-Do List</title>
-  <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
 </head>
 <body>
   <div class="container">
     <h1>Ultimate To-Do List</h1>
+
     <div class="input-group">
-      <input type="text" id="taskInput" placeholder="Task">
+      <input type="text" id="taskInput" placeholder="Task" />
       <select id="priority">
         <option value="low">Low Priority</option>
         <option value="medium">Medium Priority</option>
         <option value="high">High Priority</option>
       </select>
-      <input type="date" id="dueDate">
-      <input type="text" id="category" placeholder="Category">
-      <textarea id="subtasks" placeholder="Subtasks (comma-separated)"></textarea>
-      <button onclick="addTask()">Add Task</button>
-      <button onclick="toggleDarkMode()">Toggle Dark Mode</button>
-      <button onclick="clearAllTasks()">Clear All Tasks</button>
-      
-
+      <input type="date" id="dueDate" />
+      <input type="text" id="category" placeholder="Category" />
+      <input type="text" id="subtasks" placeholder="Subtasks, comma separated" />
+      <button id="addTaskButton">Add</button>
+      <button id="clearAllBtn">Clear All</button>
+      <button id="darkModeBtn">Toggle Dark Mode</button>
     </div>
-    <div id="progress"></div>
+
     <ul id="taskList"></ul>
+    <div id="progress"></div>
   </div>
+
   <script src="script.js"></script>
+  <script>
+    // Attach dark mode toggle after script loads
+    document.getElementById('darkModeBtn').addEventListener('click', darkSwitch);
+  </script>
 </body>
 </html>

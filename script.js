@@ -1,120 +1,143 @@
+let myTasks = [];
 
-kList = document.getElementById('taskList');
+const listA = document.getElementById('taskList');
+const progressBar = document.getElementById('progress');
 
-function addTask(event) {
-  // Prevent default form submission behavior
-  if (event) event.preventDefault();
+function showTasks() {
+  listA.innerHTML = '';
 
-  const title = document.getElementById('taskInput').value.trim();
-  const priority = document.getElementById('priority').value;
-  const dueDate = document.getElementById('dueDate').value;
-  const category = document.getElementById('category').value.trim();
-  const subtaskStr = document.getElementById('subtasks').value.trim();
+  myTasks.forEach((task, i) => {
+    const item = document.createElement('li');
+    item.classList.add(task.priority);
+    if (task.done) item.classList.add('completed');
 
-  if (!title) return;
+    const top = document.createElement('div');
+    top.className = 'task-header';
+    top.innerHTML = `<strong>${task.title}</strong> 
+      <span>${task.due || 'No due date'} | ${task.cat || 'No category'}</span>`;
 
-  const li = document.createElement('li');
-  li.classList.add(priority);
+    const btnBox = document.createElement('div');
+    btnBox.className = 'task-actions';
 
-  const header = document.createElement('div');
-  header.className = 'task-header';
-  header.innerHTML = `<strong>${title}</strong> <span>${dueDate || 'No due date'} | ${category || 'No category'}</span>`;
+    btnBox.appendChild(makeBtn('Done', () => toggleDone(i)));
+    btnBox.appendChild(makeBtn('Delete', () => deleteOne(i)));
+    btnBox.appendChild(makeBtn('Edit', () => editOne(i)));
 
-  const actions = document.createElement('div');
-  actions.className = 'task-actions';
+    top.appendChild(btnBox);
+    item.appendChild(top);
 
-  const doneButton = document.createElement('button');
-  doneButton.textContent = 'Done';
-  doneButton.addEventListener('click', () => {
-    li.classList.toggle('completed');
-    saveTasks();
-    updateProgress();
-  });
-
-  const deleteButton = document.createElement('button');
-  deleteButton.textContent = 'Delete';
-  deleteButton.addEventListener('click', () => {
-    li.remove();
-    saveTasks();
-    updateProgress();
-  });
-
-  const editButton = document.createElement('button');
-  editButton.textContent = 'Edit';
-  editButton.addEventListener('click', () => {
-    const newTitle = prompt("Edit task title:", title);
-    if (newTitle) {
-      li.querySelector('strong').textContent = newTitle;
-      saveTasks();
+    if (task.subs && task.subs.length > 0) {
+      const subList = document.createElement('ul');
+      subList.className = 'subtasks';
+      task.subs.forEach(s => {
+        const sub = document.createElement('li');
+        sub.textContent = s;
+        subList.appendChild(sub);
+      });
+      item.appendChild(subList);
     }
+
+    listA.appendChild(item);
   });
 
-  actions.appendChild(doneButton);
-  actions.appendChild(deleteButton);
-  actions.appendChild(editButton);
-  header.appendChild(actions);
-  li.appendChild(header);
+  updateBar();
+}
 
-  if (subtaskStr) {
-    const subtaskList = document.createElement('ul');
-    subtaskList.className = 'subtasks';
-    subtaskStr.split(',').forEach(sub => {
-      const subItem = document.createElement('li');
-      subItem.textContent = sub.trim();
-      subtaskList.appendChild(subItem);
-    });
-    li.appendChild(subtaskList);
-  }
+function addOne(e) {
+  if (e) e.preventDefault();
 
-  taskList.appendChild(li);
+  const name = getVal('taskInput');
+  if (!name) return;
+
+  const newTask = {
+    title: name,
+    priority: getVal('priority'),
+    due: getVal('dueDate'),
+    cat: getVal('category'),
+    subs: getVal('subtasks').split(',').map(x => x.trim()).filter(Boolean),
+    done: false
+  };
+
+  myTasks.push(newTask);
   clearForm();
-  saveTasks();
-  updateProgress();
+  saveStuff();
+  showTasks();
+}
+
+function toggleDone(i) {
+  myTasks[i].done = !myTasks[i].done;
+  saveStuff();
+  showTasks();
+}
+
+function deleteOne(i) {
+  myTasks.splice(i, 1);
+  saveStuff();
+  showTasks();
+}
+
+function editOne(i) {
+  const updated = prompt('Edit the task title:', myTasks[i].title);
+  if (updated) {
+    myTasks[i].title = updated;
+    saveStuff();
+    showTasks();
+  }
 }
 
 function clearForm() {
-  document.getElementById('taskInput').value = '';
-  document.getElementById('priority').value = 'low';
-  document.getElementById('dueDate').value = '';
-  document.getElementById('category').value = '';
-  document.getElementById('subtasks').value = '';
+  setVal('taskInput', '');
+  setVal('priority', 'low');
+  setVal('dueDate', '');
+  setVal('category', '');
+  setVal('subtasks', '');
 }
 
-function saveTasks() {
-  localStorage.setItem('tasks', taskList.innerHTML);
+function saveStuff() {
+  localStorage.setItem('myTasks', JSON.stringify(myTasks));
 }
 
-function loadTasks() {
-  const saved = localStorage.getItem('tasks');
-  if (saved) taskList.innerHTML = saved;
-  updateProgress();
-
+function loadStuff() {
+  const data = localStorage.getItem('myTasks');
+  if (data) myTasks = JSON.parse(data);
 }
 
-function toggleDarkMode() {
-  document.body.classList.toggle('dark-mode');
+function updateBar() {
+  const total = myTasks.length;
+  const doneCount = myTasks.filter(t => t.done).length;
+  progressBar.textContent = `Progress: ${doneCount} of ${total} tasks completed`;
 }
 
-function updateProgress() {
-  const total = taskList.children.length;
-  const completed = [...taskList.children].filter(task => task.classList.contains('completed')).length;
-  const progress = document.getElementById('progress');
-  progress.textContent = `Progress: ${completed} of ${total} tasks completed`;
-}
-
-function clearAllTasks() {
-  if (confirm("Are you sure you want to delete all tasks?")) {
-    taskList.innerHTML = '';
-    localStorage.removeItem('tasks');
-    updateProgress();
+function clearAll() {
+  if (confirm('Delete everything?')) {
+    myTasks = [];
+    saveStuff();
+    showTasks();
   }
 }
 
-// Attach event listeners on load
-window.onload = () => {
-  loadTasks();
+function darkSwitch() {
+  document.body.classList.toggle('dark-mode');
+}
 
-  // Change this ID to match your actual button or form element
-  document.getElementById('addTaskBtn').addEventListener('click', addTask);
-  document.getElementById('clearAllBtn').addEventListener('click', clearAllTasks);
+function makeBtn(label, action) {
+  const btn = document.createElement('button');
+  btn.textContent = label;
+  btn.addEventListener('click', action);
+  return btn;
+}
+
+function getVal(id) {
+  return document.getElementById(id).value.trim();
+}
+
+function setVal(id, val) {
+  document.getElementById(id).value = val;
+}
+
+window.onload = () => {
+  loadStuff();
+  showTasks();
+  document.getElementById('addTaskButton').addEventListener('click', addOne);
+  document.getElementById('clearAllBtn').addEventListener('click', clearAll);
 };
